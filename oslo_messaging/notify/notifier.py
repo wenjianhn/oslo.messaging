@@ -223,6 +223,27 @@ class Notifier(object):
         :type payload: dict
         :raises: MessageDeliveryFailure
         """
+
+        import inspect
+        request = inspect.getargvalues(inspect.stack()[1][0]).locals.get('request')
+        obj = None
+        if request is not None:
+            for i in request.path.split('/'):
+                #  e.g request.path: /v2.0/lbaas/loadbalancers.json
+                if len(i) != 0 and '.' not in i:
+                    obj = i
+                    break
+        print("- event_type: %s" % event_type)
+        print("  traits:\n    <<: *%s_traits" % obj)
+        for resource in payload:
+            if isinstance(payload[resource], dict):
+                for item in payload[resource]:
+                    print("    %s:" % item)
+                    print("      fields: payload.%s.%s" % (resource, item))
+            elif isinstance(resource, str):
+                print("    %s:" % resource)
+                print("      fields: payload.%s" % resource)
+
         self._notify(ctxt, event_type, payload, 'INFO')
 
     def warn(self, ctxt, event_type, payload):
